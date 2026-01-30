@@ -1,0 +1,9 @@
+@PlaylistArchivizer.API_HostAddress = http://localhost:5202
+
+GET {{PlaylistArchivizer.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+GET {{PlaylistArchivizer.API_HostAddress}}/weatherforecast/
+Accept: application/json

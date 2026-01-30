@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11415.280 d18.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlaylistArchivizer.UI.Core", "src/ui/PlaylistArchivizer.UI.Core\PlaylistArchivizer.UI.Core.csproj", "{D79E8F70-E9F9-F3C7-3968-639168697D59}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlaylistArchivizer.UI.WPF", "src/ui/PlaylistArchivizer.UI.WPF\PlaylistArchivizer.UI.WPF.csproj", "{A64BCE2C-936C-4A69-B021-65D5F4239C34}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D79E8F70-E9F9-F3C7-3968-639168697D59}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D79E8F70-E9F9-F3C7-3968-639168697D59}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D79E8F70-E9F9-F3C7-3968-639168697D59}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D79E8F70-E9F9-F3C7-3968-639168697D59}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A64BCE2C-936C-4A69-B021-65D5F4239C34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A64BCE2C-936C-4A69-B021-65D5F4239C34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A64BCE2C-936C-4A69-B021-65D5F4239C34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A64BCE2C-936C-4A69-B021-65D5F4239C34}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A92FDF96-0EFB-4EE1-9128-76B6F58B5F19}
+	EndGlobalSection
+EndGlobal

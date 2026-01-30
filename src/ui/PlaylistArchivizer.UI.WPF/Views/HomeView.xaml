@@ -1,0 +1,249 @@
+﻿<UserControl
+    x:Class="PlaylistArchivizer.UI.WPF.Views.HomeView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:homeVm="clr-namespace:PlaylistArchivizer.UI.WPF.ViewModels.Home"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:views="clr-namespace:PlaylistArchivizer.UI.WPF.Views"
+    xmlns:vm="clr-namespace:PlaylistArchivizer.UI.WPF.ViewModels"
+    d:DataContext="{d:DesignInstance homeVm:HomeViewModel}"
+    d:DesignHeight="800"
+    d:DesignWidth="1200"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <vm:LoadingViewModel x:Key="LoadingViewModel" />
+
+        <ToolTip
+            x:Key="FreeTracksToolTip"
+            Background="{StaticResource PrimaryBackgroundBrush}"
+            BorderBrush="{StaticResource SecondaryBackgroundBrush}"
+            Content="Polubione utwory, których nie ma w historii"
+            Foreground="{StaticResource PrimaryForegroundBrush}" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="auto" />
+            <ColumnDefinition Width="3*" />
+        </Grid.ColumnDefinitions>
+
+        <!--#region Left Panel-->
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="10">
+                <ToggleButton
+                    Margin="0,0,0,30"
+                    Command="{Binding SelectFreeTracksCommand}"
+                    Content="Wolne utwory"
+                    IsChecked="{Binding IsFreeTracksSelected, Mode=OneWay}"
+                    ToolTip="{StaticResource FreeTracksToolTip}" />
+
+                <Label
+                    HorizontalAlignment="Center"
+                    Content="Twoje playlisty"
+                    FontSize="25" />
+
+                <ItemsControl
+                    HorizontalContentAlignment="Stretch"
+                    Background="Transparent"
+                    ItemsSource="{Binding Playlists}">
+
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ToggleButton
+                                Command="{Binding SelectCommand}"
+                                Content="{Binding Name}"
+                                IsChecked="{Binding IsSelected, Mode=OneWay}">
+
+                                <ToggleButton.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Command="{Binding CreatePlaylistCommand}" Header="Stwórz w Spotify">
+                                            <MenuItem.Icon>
+                                                <Image Source="/Images/createIcon.png" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+
+                                        <MenuItem Command="{Binding RemovePlaylistCommand}" Header="Usuń z historii">
+                                            <MenuItem.Icon>
+                                                <Image Source="/Images/removeIcon.png" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                    </ContextMenu>
+                                </ToggleButton.ContextMenu>
+                            </ToggleButton>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+        <!--#endregion-->
+
+        <!--#region Right Panel-->
+        <DataGrid
+            Name="dataGrid"
+            Grid.Column="1"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            AutoGenerateColumns="False"
+            Background="Transparent"
+            CanUserAddRows="False"
+            CanUserDeleteRows="False"
+            IsReadOnly="True"
+            ItemsSource="{Binding CurrentDisplayedTracks, NotifyOnTargetUpdated=True}"
+            RowHeaderWidth="0"
+            ScrollViewer.CanContentScroll="True"
+            SelectionUnit="FullRow"
+            Sorting="dataGrid_Sorting"
+            TargetUpdated="dataGrid_TargetUpdated"
+            VirtualizingStackPanel.IsVirtualizing="True"
+            VirtualizingStackPanel.VirtualizationMode="Recycling">
+
+            <DataGrid.Resources>
+                <!--  Used in DataGridRow  -->
+                <ContextMenu x:Key="RowMenu">
+                    <MenuItem
+                        d:DataContext="{d:DesignInstance Type=homeVm:TrackViewModel}"
+                        Command="{Binding RemoveTrackCommand}"
+                        Header="Usuń z historii">
+                        <MenuItem.Icon>
+                            <Image Source="/Images/removeIcon.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                </ContextMenu>
+
+                <Style TargetType="TextBlock">
+                    <Setter Property="TextWrapping" Value="Wrap" />
+                    <Setter Property="Padding" Value="6" />
+                </Style>
+
+                <Style x:Key="DataGridColumnStyle" TargetType="TextBlock">
+                    <Setter Property="TextWrapping" Value="Wrap" />
+                    <Setter Property="Padding" Value="6" />
+                </Style>
+
+                <!--  Remove default colors from datagrid  -->
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Transparent" />
+                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#E0E0E0" />
+
+                <BitmapImage x:Key="LoadingIcon" UriSource="pack://application:,,,/Images/loadingIcon.png" />
+            </DataGrid.Resources>
+
+            <!--  Hide datagrid when can't show tracks  -->
+            <DataGrid.Style>
+                <Style TargetType="DataGrid">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding DisplayedTracksState}" Value="None">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+
+                        <DataTrigger Binding="{Binding DisplayedTracksState}" Value="Loading">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+
+                        <DataTrigger Binding="{Binding CurrentDisplayedTracks.Count}" Value="0">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.Style>
+
+            <DataGrid.RowStyle>
+                <Style BasedOn="{StaticResource {x:Type DataGridRow}}" TargetType="DataGridRow">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding DataContext.DisplayedTracksState, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="FreeTracks">
+                            <Setter Property="ContextMenu" Value="{x:Null}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+
+                    <Setter Property="ContextMenu" Value="{StaticResource RowMenu}" />
+                </Style>
+            </DataGrid.RowStyle>
+
+            <!--  Columns  -->
+            <DataGrid.Columns>
+                <DataGridTemplateColumn>
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image
+                                Width="100"
+                                Margin="6"
+                                Source="{Binding ImagePath, TargetNullValue={StaticResource LoadingIcon}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding ArtistsString}"
+                    ElementStyle="{StaticResource DataGridColumnStyle}"
+                    Header="Artyści" />
+
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding Name}"
+                    ElementStyle="{StaticResource DataGridColumnStyle}"
+                    Header="Tytuł" />
+
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding AddedAt, StringFormat=dd.MM.yyyy HH:mm}"
+                    ElementStyle="{StaticResource DataGridColumnStyle}"
+                    Header="Data Dodania" />
+
+                <DataGridCheckBoxColumn
+                    Width="130"
+                    Binding="{Binding IsSaved, Mode=OneWay}"
+                    Header="Polubione" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!--  Text to display when the datagrid can't show tracks  -->
+        <TextBlock
+            Grid.Column="1"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            FontSize="35">
+
+            <TextBlock.Style>
+                <Style BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding DisplayedTracksState}" Value="Empty">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Setter Property="Text" Value="Brak utworów do wyświetlenia" />
+                        </DataTrigger>
+
+                        <DataTrigger Binding="{Binding DisplayedTracksState}" Value="None">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Setter Property="Text" Value="Nie zaznaczono playlisty" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <!--  Loading screen  -->
+        <views:LoadingView Grid.Column="1" DataContext="{StaticResource LoadingViewModel}">
+            <views:LoadingView.Style>
+                <Style TargetType="views:LoadingView">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding DataContext.DisplayedTracksState, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="Loading">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </views:LoadingView.Style>
+        </views:LoadingView>
+        <!--#endregion-->
+    </Grid>
+</UserControl>

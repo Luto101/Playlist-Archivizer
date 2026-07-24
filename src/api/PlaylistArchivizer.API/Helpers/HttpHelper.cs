@@ -38,10 +38,9 @@ namespace PlaylistArchivizer.API.Helpers
             return content;
         }
 
-        private static async Task<HttpResponseMessage> SendAsync(HttpMethod method, HttpClient client, string url, Dictionary<string, string>? parameters = null, object? body = null, string? contentType = null)
+        private static async Task<HttpResponseMessage> SendAsync(
+            HttpMethod method, HttpClient client, string url, Dictionary<string, string>? parameters = null, object? body = null, string? contentType = null)
         {
-            //await Connector.RefreshTokenAsync(client); // Check if token is expired
-
             if (parameters != null)
                 url += FormQuery(parameters);
 
@@ -60,32 +59,61 @@ namespace PlaylistArchivizer.API.Helpers
         private async static Task ThrowExceptionIfRequired(HttpResponseMessage response)
         {
             if (response.StatusCode is >= System.Net.HttpStatusCode.BadRequest)
-                throw new("Status: " + response.StatusCode.ToString() + ". " + await GetErrorMessageAsync(response.Content));
+                throw new BadHttpRequestException(
+                    "Status: " + response.StatusCode.ToString() +
+                    ". " + await GetErrorMessageAsync(response));
         }
 
         // Gets error message form response.
-        private async static Task<string> GetErrorMessageAsync(HttpContent content)
+        private async static Task<string> GetErrorMessageAsync(HttpResponseMessage response)
         {
-            if (content == null)
+            if (response.Content == null)
                 return "No error content provided.";
 
-            string rawString = await content.ReadAsStringAsync();
+            string rawString = await response.Content.ReadAsStringAsync();
 
             if (string.IsNullOrWhiteSpace(rawString))
-                return "Empty error response.";
+                return $"Empty error response. Status: {response.StatusCode}";
 
+            // Try multiple known shapes:
+            // 1) Spotify token errors: { "error": "invalid_grant", "error_description": "..." }
             try
             {
-                var errorObj = JsonSerializer.Deserialize<ErrorResponse>(rawString);
+                using var doc = JsonDocument.Parse(rawString);
+                var root = doc.RootElement;
 
-                if (errorObj?.error?.message != null)
-                    return errorObj.error.message;
-                else
-                    return rawString;
+                if (root.ValueKind == JsonValueKind.Object)
+                {
+                    if (root.TryGetProperty("error_description", out var descProp))
+                    {
+                        string err = root.GetProperty("error").GetString() ?? "unknown_error";
+                        return $"{err}: {descProp.GetString()} (raw: {rawString})";
+                    }
+
+                    // 2) other API error shape: { "error": { "message": "...", "status": 400 } }
+                    if (root.TryGetProperty("error", out var errObj) && errObj.ValueKind == JsonValueKind.Object)
+                    {
+                        if (errObj.TryGetProperty("message", out var msgProp))
+                        {
+                            string message = msgProp.GetString() ?? rawString;
+                            return $"Status: {response.StatusCode}. {message} (raw: {rawString})";
+                        }
+                    }
+
+                    // 3) generic error field
+                    if (root.TryGetProperty("error", out var errVal) && errVal.ValueKind == JsonValueKind.String)
+                    {
+                        return $"Error: {errVal.GetString()} (raw: {rawString})";
+                    }
+                }
+
+                // Fallback to raw string if JSON but unknown shape
+                return $"Unknown JSON error shape. Raw: {rawString}";
             }
             catch (JsonException)
             {
-                return "Json parsing error.";
+                // Not JSON or parsing failed; return raw body
+                return $"Non-JSON error body: {rawString}";
             }
         }
     }

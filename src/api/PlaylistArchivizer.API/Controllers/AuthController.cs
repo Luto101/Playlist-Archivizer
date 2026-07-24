@@ -1,59 +1,40 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+using PlaylistArchivizer.API.Helpers;
+using PlaylistArchivizer.API.Services;
 
 namespace PlaylistArchivizer.API.Controllers
 {
     [ApiController]
     [Route("api/auth")]
-    public class AuthController : ControllerBase
+    public class AuthController(IConfiguration _config, IAuthService authService) : ControllerBase
     {
-        private readonly IConfiguration _config;
-
-        public AuthController(IConfiguration config)
+        [HttpGet("spotify-url")]
+        public IActionResult LoginToSpotify()
         {
-            _config = config;
-        }
-
-        [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginModel model)
-        {
-            if (model.Username == "admin" && model.Password == "tajneHaslo123")
+            var parameters = new Dictionary<string, string>
             {
-                var claims = new[]
-                {
-                new Claim(ClaimTypes.Name, model.Username),
-                new Claim(ClaimTypes.Role, "Admin"),
-                new Claim("CustomAppId", "42")    
+                { "response_type", "code" },
+                { "client_id", _config["Spotify:ClientId"]! },
+                { "scope", _config["Spotify:Scopes"]! },
+                { "redirect_uri", _config["Spotify:RedirectUri"]! }
             };
 
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Secret"]!));
-                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            string query = HttpHelper.FormQuery(parameters);
 
-                var token = new SecurityTokenDescriptor
-                {
-                    Subject = new ClaimsIdentity(claims),
-                    Expires = DateTime.UtcNow.AddHours(1),
-                    Issuer = _config["Jwt:Issuer"],
-                    Audience = _config["Jwt:Audience"],
-                    SigningCredentials = creds
-                };
+            var spotifyUrl = "https://accounts.spotify.com/authorize" + query;
 
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var jwt = tokenHandler.CreateToken(token);
-
-                return Ok(new { token = tokenHandler.WriteToken(jwt) });
-            }
-
-            return Unauthorized("Błędne dane logowania.");
+            return Ok(new { url = spotifyUrl });
         }
-    }
 
-    public class LoginModel
-    {
-        public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        [HttpGet("spotify")]
+        public async Task<IActionResult> LoginWithSpotify([FromQuery] string code, [FromQuery] string? error)
+        {
+            if (!string.IsNullOrEmpty(error))
+                return BadRequest($"Spotify error: {error}");
+
+            string token = await authService.ProcessSpotifyLoginAsync(code);
+
+            return Ok(new { token }); // Change to the close window HTML page
+        }
     }
 }

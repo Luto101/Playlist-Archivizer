@@ -26,6 +26,7 @@ namespace PlaylistArchivizer.API.Controllers
             return Ok(new { url = spotifyUrl });
         }
 
+        // Spotify will redirect to this endpoint after user login
         [HttpGet("spotify")]
         public async Task<IActionResult> LoginWithSpotify([FromQuery] string code, [FromQuery] string? error)
         {

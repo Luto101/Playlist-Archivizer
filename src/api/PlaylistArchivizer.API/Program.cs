@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PlaylistArchivizer.API.Data;
-using PlaylistArchivizer.API.Repository;
+using PlaylistArchivizer.API.Repositories;
 using PlaylistArchivizer.API.Services;
 using System.Text;
 

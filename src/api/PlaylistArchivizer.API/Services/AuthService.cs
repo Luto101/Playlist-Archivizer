@@ -1,7 +1,8 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using PlaylistArchivizer.API.Entities;
 using PlaylistArchivizer.API.Models;
-using PlaylistArchivizer.API.Repository;
+using PlaylistArchivizer.API.Repositories;
+using PlaylistArchivizer.API.Responses;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -38,6 +39,31 @@ namespace PlaylistArchivizer.API.Services
 
             return token;
         }
+
+        public async Task<string> GetValidSpotifyTokenAsync(string userId)
+        {
+            var spotifyToken = await _tokenRepository.GetByUserIdAsync(userId) ?? 
+                throw new Exception("No Spotify credentials found for this user.");
+
+            if (spotifyToken.IsAccessTokenValid)
+                return spotifyToken.AccessToken;
+
+            // Token is expired. Call for a new access token using the refresh token.
+            TokenResponse newTokens = await _spotifyLoginService.RefreshTokenAsync(spotifyToken.RefreshToken);
+
+            spotifyToken.AccessToken = newTokens.access_token;
+            spotifyToken.ExpiresIn = newTokens.expires_in;
+            spotifyToken.CreatedAt = DateTime.UtcNow;
+
+            // Spotify sometimes issues a new refresh token.
+            if (!string.IsNullOrEmpty(newTokens.refresh_token))
+                spotifyToken.RefreshToken = newTokens.refresh_token;
+
+            await _tokenRepository.UpsertAsync(spotifyToken);
+
+            return spotifyToken.AccessToken;
+        }
+
 
         private string GenerateToken(string userId)
         {

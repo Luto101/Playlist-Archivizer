@@ -2,7 +2,7 @@
 using PlaylistArchivizer.API.Data;
 using PlaylistArchivizer.API.Entities;
 
-namespace PlaylistArchivizer.API.Repository
+namespace PlaylistArchivizer.API.Repositories
 {
     public class SpotifyTokenRepository : ISpotifyTokenRepository
     {

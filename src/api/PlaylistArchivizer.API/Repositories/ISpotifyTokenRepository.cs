@@ -1,6 +1,6 @@
 ﻿using PlaylistArchivizer.API.Entities;
 
-namespace PlaylistArchivizer.API.Repository
+namespace PlaylistArchivizer.API.Repositories
 {
     public interface ISpotifyTokenRepository
     {

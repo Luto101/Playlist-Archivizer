@@ -61,59 +61,32 @@ namespace PlaylistArchivizer.API.Helpers
             if (response.StatusCode is >= System.Net.HttpStatusCode.BadRequest)
                 throw new BadHttpRequestException(
                     "Status: " + response.StatusCode.ToString() +
-                    ". " + await GetErrorMessageAsync(response));
+                    ". " + await GetErrorMessageAsync(response.Content));
         }
 
         // Gets error message form response.
-        private async static Task<string> GetErrorMessageAsync(HttpResponseMessage response)
+        private async static Task<string> GetErrorMessageAsync(HttpContent content)
         {
-            if (response.Content == null)
+            if (content == null)
                 return "No error content provided.";
 
-            string rawString = await response.Content.ReadAsStringAsync();
+            string rawString = await content.ReadAsStringAsync();
 
             if (string.IsNullOrWhiteSpace(rawString))
-                return $"Empty error response. Status: {response.StatusCode}";
+                return "Empty error response.";
 
-            // Try multiple known shapes:
-            // 1) Spotify token errors: { "error": "invalid_grant", "error_description": "..." }
             try
             {
-                using var doc = JsonDocument.Parse(rawString);
-                var root = doc.RootElement;
+                var errorResponse = JsonSerializer.Deserialize<ErrorResponse>(rawString);
 
-                if (root.ValueKind == JsonValueKind.Object)
-                {
-                    if (root.TryGetProperty("error_description", out var descProp))
-                    {
-                        string err = root.GetProperty("error").GetString() ?? "unknown_error";
-                        return $"{err}: {descProp.GetString()} (raw: {rawString})";
-                    }
-
-                    // 2) other API error shape: { "error": { "message": "...", "status": 400 } }
-                    if (root.TryGetProperty("error", out var errObj) && errObj.ValueKind == JsonValueKind.Object)
-                    {
-                        if (errObj.TryGetProperty("message", out var msgProp))
-                        {
-                            string message = msgProp.GetString() ?? rawString;
-                            return $"Status: {response.StatusCode}. {message} (raw: {rawString})";
-                        }
-                    }
-
-                    // 3) generic error field
-                    if (root.TryGetProperty("error", out var errVal) && errVal.ValueKind == JsonValueKind.String)
-                    {
-                        return $"Error: {errVal.GetString()} (raw: {rawString})";
-                    }
-                }
-
-                // Fallback to raw string if JSON but unknown shape
-                return $"Unknown JSON error shape. Raw: {rawString}";
+                if (errorResponse?.error?.message != null)
+                    return errorResponse.error.message;
+                else
+                    return rawString;
             }
             catch (JsonException)
             {
-                // Not JSON or parsing failed; return raw body
-                return $"Non-JSON error body: {rawString}";
+                return "Json parsing error.";
             }
         }
     }

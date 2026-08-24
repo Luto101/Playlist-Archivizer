@@ -5,9 +5,19 @@ VisualStudioVersion = 18.2.11415.280
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlaylistArchivizer.UI.Core", "src\ui\PlaylistArchivizer.UI.Core\PlaylistArchivizer.UI.Core.csproj", "{D79E8F70-E9F9-F3C7-3968-639168697D59}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlaylistArchivizer.UI.WPF", "src\ui\PlaylistArchivizer.UI.WPF\PlaylistArchivizer.UI.WPF.csproj", "{A64BCE2C-936C-4A69-B021-65D5F4239C34}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlaylistArchivizer.Wpf", "src\ui\PlaylistArchivizer.Wpf\PlaylistArchivizer.Wpf.csproj", "{A64BCE2C-936C-4A69-B021-65D5F4239C34}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlaylistArchivizer.API", "src\api\PlaylistArchivizer.API\PlaylistArchivizer.API.csproj", "{696BDF96-FC14-4BB6-8B2A-9722B1D8D9B2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlaylistArchivizer.WebApi", "src\api\PlaylistArchivizer.WebApi\PlaylistArchivizer.WebApi.csproj", "{696BDF96-FC14-4BB6-8B2A-9722B1D8D9B2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UI", "UI", "{8D7D9600-9967-4234-A219-73FA1E218A45}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "API", "API", "{25963B53-FCCB-4D6D-A947-2020C3C47970}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlaylistArchivizer.Domain", "src\api\PlaylistArchivizer.Domain\PlaylistArchivizer.Domain.csproj", "{9CD10175-2779-4BD4-9D65-44E5A988381F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlaylistArchivizer.Application", "src\api\PlaylistArchivizer.Application\PlaylistArchivizer.Application.csproj", "{06DCE85E-230E-4C62-82C8-990F8F079D43}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlaylistArchivizer.Infrastructure", "src\api\PlaylistArchivizer.Infrastructure\PlaylistArchivizer.Infrastructure.csproj", "{AC1AB425-2CAD-48F9-B378-F10D5057D864}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,9 +37,29 @@ Global
 		{696BDF96-FC14-4BB6-8B2A-9722B1D8D9B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{696BDF96-FC14-4BB6-8B2A-9722B1D8D9B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{696BDF96-FC14-4BB6-8B2A-9722B1D8D9B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9CD10175-2779-4BD4-9D65-44E5A988381F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9CD10175-2779-4BD4-9D65-44E5A988381F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9CD10175-2779-4BD4-9D65-44E5A988381F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9CD10175-2779-4BD4-9D65-44E5A988381F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06DCE85E-230E-4C62-82C8-990F8F079D43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06DCE85E-230E-4C62-82C8-990F8F079D43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06DCE85E-230E-4C62-82C8-990F8F079D43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06DCE85E-230E-4C62-82C8-990F8F079D43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC1AB425-2CAD-48F9-B378-F10D5057D864}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC1AB425-2CAD-48F9-B378-F10D5057D864}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC1AB425-2CAD-48F9-B378-F10D5057D864}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC1AB425-2CAD-48F9-B378-F10D5057D864}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D79E8F70-E9F9-F3C7-3968-639168697D59} = {8D7D9600-9967-4234-A219-73FA1E218A45}
+		{A64BCE2C-936C-4A69-B021-65D5F4239C34} = {8D7D9600-9967-4234-A219-73FA1E218A45}
+		{696BDF96-FC14-4BB6-8B2A-9722B1D8D9B2} = {25963B53-FCCB-4D6D-A947-2020C3C47970}
+		{9CD10175-2779-4BD4-9D65-44E5A988381F} = {25963B53-FCCB-4D6D-A947-2020C3C47970}
+		{06DCE85E-230E-4C62-82C8-990F8F079D43} = {25963B53-FCCB-4D6D-A947-2020C3C47970}
+		{AC1AB425-2CAD-48F9-B378-F10D5057D864} = {25963B53-FCCB-4D6D-A947-2020C3C47970}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A92FDF96-0EFB-4EE1-9128-76B6F58B5F19}

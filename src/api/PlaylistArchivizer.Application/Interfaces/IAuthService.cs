@@ -1,6 +1,6 @@
 ﻿using PlaylistArchivizer.Application.Dtos;
 
-namespace PlaylistArchivizer.Application.Services
+namespace PlaylistArchivizer.Application.Interfaces
 {
     public interface IAuthService
     {

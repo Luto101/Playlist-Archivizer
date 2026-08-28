@@ -1,4 +1,4 @@
-﻿namespace PlaylistArchivizer.Application.Services
+﻿namespace PlaylistArchivizer.Application.Interfaces
 {
     public interface ITokenService
     {

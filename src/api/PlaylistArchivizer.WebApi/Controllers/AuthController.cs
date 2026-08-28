@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.WebUtilities;
 using PlaylistArchivizer.Application.Dtos;
 using PlaylistArchivizer.Application.Exceptions;
 using PlaylistArchivizer.Application.Interfaces;
-using PlaylistArchivizer.Application.Services;
 using System.Security.Cryptography;
 
 namespace PlaylistArchivizer.WebApi.Controllers
@@ -13,17 +12,22 @@ namespace PlaylistArchivizer.WebApi.Controllers
     public class AuthController(IConfiguration config,
                                 IAuthService authService,
                                 ISpotifyLoginService spotifyLoginService,
-                                ITokenService tokenService) : ControllerBase
+                                ITokenService tokenService,
+                                IAuthCodeService authCodeService) : ControllerBase
     {
-        // Stores white-listed client application URIs for post-login redirection
+        // Stores whitelisted client application URIs for post-login redirection
         private readonly HashSet<string> _allowedRedirects =
             config.GetSection("Auth:AllowedClientRedirectUris").Get<string[]>()?
             .ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
 
+        /// <summary>
+        /// Endpoint to initiate the Spotify login process. 
+        /// It generates a Spotify authorization URL and redirects the user to it.
+        /// </summary>
         [HttpGet("spotify-url")]
         public IActionResult LoginToSpotify([FromQuery] string redirectUri)
         {
-            // Validate that the target client redirect URI is explicitly whitelisted in configuration
+            // Validate that the target client redirect URI is whitelisted in configuration
             if (!_allowedRedirects.Contains(redirectUri))
                 throw new ValidationException("Invalid client redirect URI");
 
@@ -48,9 +52,9 @@ namespace PlaylistArchivizer.WebApi.Controllers
             return Redirect(spotifyUrl);
         }
 
-        // This endpoint is called by Spotify after the user authorizes the application
+        /// <summary>Endpoint is called by Spotify after the user authorizes the application</summary>
         [HttpGet("spotify")]
-        public async Task<IActionResult> LoginWithSpotify([FromQuery] string code,
+        public async Task<IActionResult> LoginWithSpotify([FromQuery(Name = "code")] string spotifyCode,
                                                           [FromQuery] string state,
                                                           [FromQuery] string? error)
         {
@@ -58,10 +62,9 @@ namespace PlaylistArchivizer.WebApi.Controllers
             if (!string.IsNullOrEmpty(error))
                 throw new ExternalServiceException("Spotify", error);
 
-            if (string.IsNullOrEmpty(code))
+            if (string.IsNullOrEmpty(spotifyCode))
                 throw new ValidationException("Missing authorization code");
 
-            // Verify that the cookie still exists
             if (!Request.Cookies.TryGetValue("spotify_auth_state", out var cookieState))
                 throw new SessionExpiredException("Session expired. Please try logging in again");
 
@@ -77,15 +80,29 @@ namespace PlaylistArchivizer.WebApi.Controllers
             Response.Cookies.Delete("spotify_client_redirect");
 
             // Exchange the authorization code for the Spotify user data
-            SpotifyUserDataDto userData = await authService.ProcessSpotifyLoginAsync(code);
+            SpotifyUserDataDto userData = await authService.ProcessSpotifyLoginAsync(spotifyCode);
 
-            // Generate an application token
-            string token = tokenService.GenerateToken(userData.UserId);
+            // Generate one-time authorization code
+            string code = authCodeService.CreateCode(userData.UserId);
 
-            // Append the generated application token as a query parameter to the final client redirect URL
-            string successUrl = QueryHelpers.AddQueryString(redirectUri, "token", token);
+            string successUrl = QueryHelpers.AddQueryString(redirectUri, "code", code);
 
             return Redirect(successUrl);
+        }
+
+        /// <summary>Exchanges a one-time authorization code for an access token.</summary>
+        [HttpPost("exchange")]
+        public IActionResult ExchangeCode([FromBody] ExchangeCodeRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Code))
+                throw new ValidationException("Missing authorization code");
+
+            if (!authCodeService.TryConsumeCode(request.Code, out string userId))
+                throw new ValidationException("Invalid or expired authorization code");
+
+            string token = tokenService.GenerateToken(userId);
+
+            return Ok(new { accessToken = token });
         }
     }
 }

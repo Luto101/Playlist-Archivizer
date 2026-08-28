@@ -42,12 +42,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+builder.Services.AddMemoryCache();
+
 
 builder.Services.AddTransient<ISpotifyLoginService, SpotifyLoginService>();
+builder.Services.AddTransient<IAuthCodeService, AuthCodeService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.AddScoped<ISpotifyTokenRepository, SpotifyTokenRepository>();
-
 
 var app = builder.Build();
 

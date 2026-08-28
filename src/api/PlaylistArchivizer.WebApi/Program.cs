@@ -5,6 +5,7 @@ using PlaylistArchivizer.Application.Interfaces;
 using PlaylistArchivizer.Application.Services;
 using PlaylistArchivizer.Infrastructure.Persistence.Data;
 using PlaylistArchivizer.Infrastructure.Persistence.Repositories;
+using PlaylistArchivizer.Infrastructure.Persistence.Services;
 using PlaylistArchivizer.Infrastructure.SpotifyApi.Services;
 using System.Text;
 
@@ -36,6 +37,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 builder.Services.AddHttpClient();
+builder.Services.AddDataProtection();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -49,8 +51,9 @@ builder.Services.AddTransient<ISpotifyLoginService, SpotifyLoginService>();
 builder.Services.AddTransient<IAuthCodeService, AuthCodeService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
 
-builder.Services.AddScoped<ISpotifyTokenRepository, SpotifyTokenRepository>();
+builder.Services.AddScoped<ISpotifyTokenRepository, SpotifyCredentialRepository>();
 
 var app = builder.Build();
 

@@ -56,7 +56,7 @@ namespace PlaylistArchivizer.Infrastructure.SpotifyApi.Services
 
         public async Task<SpotifyUserDataDto> AuthenticateAsync(string code)
         {
-            var client = _httpClientFactory.CreateClient();
+            HttpClient client = _httpClientFactory.CreateClient();
 
             // Prepare the payload for exchanging the authorization code for access tokens
             Dictionary<string, string> body = new()
@@ -105,7 +105,7 @@ namespace PlaylistArchivizer.Infrastructure.SpotifyApi.Services
 
         public async Task<SpotifyTokenDto> RefreshTokenAsync(string refreshToken)
         {
-            var client = _httpClientFactory.CreateClient();
+            HttpClient client = _httpClientFactory.CreateClient();
 
             // Prepare the payload for renewing an expired access token using a refresh token
             Dictionary<string, string> body = new()

@@ -22,7 +22,7 @@ namespace PlaylistArchivizer.Infrastructure.Persistence.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            var encryptionConverter = new EncryptionConverter(_encryptionService);
+            EncryptionConverter encryptionConverter = new(_encryptionService);
 
             modelBuilder.Entity<SpotifyCredential>(entity =>
             {

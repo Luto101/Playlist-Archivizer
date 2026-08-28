@@ -18,17 +18,17 @@ namespace PlaylistArchivizer.Application.Services
             _issuer = config["Jwt:Issuer"] ?? throw new InvalidOperationException("JWT Issuer is missing.");
             _audience = config["Jwt:Audience"] ?? throw new InvalidOperationException("JWT Audience is missing.");
 
-            var secret = config["Jwt:Secret"];
+            string? secret = config["Jwt:Secret"];
             if (string.IsNullOrEmpty(secret) || secret.Length < 32)
                 throw new InvalidOperationException("JWT Secret must be at least 32 characters long.");
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+            SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(secret));
             _credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         }
 
         public string GenerateToken(string userId)
         {
-            var tokenDescriptor = new SecurityTokenDescriptor
+            SecurityTokenDescriptor tokenDescriptor = new()
             {
                 Claims = new Dictionary<string, object>
                 {
@@ -40,7 +40,7 @@ namespace PlaylistArchivizer.Application.Services
                 SigningCredentials = _credentials
             };
 
-            var tokenHandler = new JsonWebTokenHandler();
+            JsonWebTokenHandler tokenHandler = new();
             return tokenHandler.CreateToken(tokenDescriptor);
         }
     }

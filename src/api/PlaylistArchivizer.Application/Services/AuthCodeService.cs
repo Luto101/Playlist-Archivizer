@@ -8,7 +8,7 @@ namespace PlaylistArchivizer.Application.Services
     {
         public string CreateCode(string userId)
         {
-            var code = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+            string code = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
 
             cache.Set(GetKey(code),
                       userId,

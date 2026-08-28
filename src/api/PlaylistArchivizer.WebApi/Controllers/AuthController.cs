@@ -32,9 +32,9 @@ namespace PlaylistArchivizer.WebApi.Controllers
                 throw new ValidationException("Invalid client redirect URI");
 
             // CSRF protection
-            var state = Convert.ToHexString(RandomNumberGenerator.GetBytes(16));
+            string state = Convert.ToHexString(RandomNumberGenerator.GetBytes(16));
 
-            var cookieOptions = new CookieOptions
+            CookieOptions cookieOptions = new()
             {
                 IsEssential = true,
                 HttpOnly = true,
@@ -65,7 +65,7 @@ namespace PlaylistArchivizer.WebApi.Controllers
             if (string.IsNullOrEmpty(spotifyCode))
                 throw new ValidationException("Missing authorization code");
 
-            if (!Request.Cookies.TryGetValue("spotify_auth_state", out var cookieState))
+            if (!Request.Cookies.TryGetValue("spotify_auth_state", out string? cookieState))
                 throw new SessionExpiredException("Session expired. Please try logging in again");
 
             // CSRF protection
@@ -73,7 +73,7 @@ namespace PlaylistArchivizer.WebApi.Controllers
                 throw new ValidationException("Invalid state parameter. CSRF protection triggered");
 
             // Validate that the target client redirect URI is still whitelisted in configuration
-            if (!Request.Cookies.TryGetValue("spotify_client_redirect", out var redirectUri) || !_allowedRedirects.Contains(redirectUri))
+            if (!Request.Cookies.TryGetValue("spotify_client_redirect", out string? redirectUri) || !_allowedRedirects.Contains(redirectUri))
                 throw new ValidationException("Invalid or missing client redirect URI");
 
             Response.Cookies.Delete("spotify_auth_state");

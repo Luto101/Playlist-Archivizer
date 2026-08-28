@@ -26,7 +26,7 @@ namespace PlaylistArchivizer.Application.Services
 
         public async Task<string> GetValidSpotifyTokenAsync(string userId)
         {
-            var spotifyCredential = await tokenRepository.GetByUserIdAsync(userId) ??
+            SpotifyCredential? spotifyCredential = await tokenRepository.GetByUserIdAsync(userId) ??
                 throw new NotFoundException("Spotify credentials", userId);
 
             if (spotifyCredential.IsAccessTokenValid)

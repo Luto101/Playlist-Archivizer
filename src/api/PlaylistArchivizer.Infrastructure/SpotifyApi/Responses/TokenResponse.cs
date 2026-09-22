@@ -12,5 +12,11 @@ namespace PlaylistArchivizer.Infrastructure.SpotifyApi.Responses
 
         [JsonPropertyName("refresh_token")]
         public string RefreshToken { get; init; } = default!;
+
+        [JsonPropertyName("scope")]
+        public string Scope { get; set; } = default!;
+
+        [JsonPropertyName("token_type")]
+        public string TokenType { get; set; } = default!;
     }
 }

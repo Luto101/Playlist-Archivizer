@@ -2,7 +2,7 @@
 
 namespace PlaylistArchivizer.Application.Interfaces
 {
-    public interface ISpotifyTokenRepository
+    public interface ISpotifyCredentialRepository
     {
         Task<SpotifyCredential?> GetByUserIdAsync(string userId);
         Task UpsertAsync(SpotifyCredential newToken);

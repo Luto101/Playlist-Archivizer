@@ -6,7 +6,7 @@ using PlaylistArchivizer.Domain.Entities;
 namespace PlaylistArchivizer.Application.Services
 {
     public class AuthService(ISpotifyLoginService spotifyLoginService,
-                             ISpotifyTokenRepository tokenRepository) : IAuthService
+                             ISpotifyCredentialRepository tokenRepository) : IAuthService
     {
         public async Task<SpotifyUserDataDto> ProcessSpotifyLoginAsync(string code)
         {

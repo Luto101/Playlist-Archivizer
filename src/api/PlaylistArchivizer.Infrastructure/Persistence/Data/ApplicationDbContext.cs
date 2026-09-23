@@ -8,6 +8,9 @@ namespace PlaylistArchivizer.Infrastructure.Persistence.Data
     public class ApplicationDbContext : DbContext
     {
         public DbSet<SpotifyCredential> SpotifyCredentials { get; set; }
+        public DbSet<TrackEntity> Tracks { get; set; }
+        public DbSet<PlaylistEntity> Playlists { get; set; }
+        public DbSet<IgnoredPlaylist> IgnoredPlaylists { get; set; }
 
         private readonly IEncryptionService _encryptionService;
 

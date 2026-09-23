@@ -5,7 +5,7 @@ using PlaylistArchivizer.Infrastructure.Persistence.Data;
 
 namespace PlaylistArchivizer.Infrastructure.Persistence.Repositories
 {
-    public class SpotifyCredentialRepository(ApplicationDbContext context) : ISpotifyTokenRepository
+    public class SpotifyCredentialRepository(ApplicationDbContext context) : ISpotifyCredentialRepository
     {
         public async Task<SpotifyCredential?> GetByUserIdAsync(string userId) =>
             await context.SpotifyCredentials.FirstOrDefaultAsync(c => c.UserId == userId);

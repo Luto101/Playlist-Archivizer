@@ -4,7 +4,7 @@
     {
         public string Id { get; init; }
         public string Name { get; init; }
-        public DateTime? AddedAt { get; init; }
+        public DateTime? AddedAt { get; set; }
         public string ImageUrl { get; init; }
         public IReadOnlyCollection<string> Artists => _artists.AsReadOnly();
 

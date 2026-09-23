@@ -86,7 +86,7 @@ namespace PlaylistArchivizer.UI.Core
                             ["ids"] = string.Join(",", tracksIdsToCheck)
                         };
 
-                        var response = await HttpHelper.GetAsync(_client, "https://api.spotify.com/v1/me/tracks/contains", parameters);
+                        var response = await HttpHelper.GetAsync(_client, "me/tracks/contains", parameters);
 
                         bool[] IsCheckedTracksSaved = JsonSerializer.Deserialize<bool[]>(await response.Content.ReadAsStreamAsync())!;
 
@@ -113,7 +113,7 @@ namespace PlaylistArchivizer.UI.Core
             {
                 parameters["fields"] = "total, items(id, images, name, snapshot_id)";
 
-                var response = await HttpHelper.GetAsync(_client, "https://api.spotify.com/v1/me/playlists", parameters);
+                var response = await HttpHelper.GetAsync(_client, "me/playlists", parameters);
 
                 var jsonResponse = JsonSerializer.Deserialize<PlaylistsResponse>(await response.Content.ReadAsStreamAsync())!;
 
@@ -157,7 +157,7 @@ namespace PlaylistArchivizer.UI.Core
         private async Task<List<Track>> GetTracks(string playlistId)
         {
             List<Track> tracks = [];
-            string? url = $"https://api.spotify.com/v1/playlists/{playlistId}/tracks";
+            string? url = $"playlists/{playlistId}/tracks";
 
             int limit = 50;
 
@@ -197,7 +197,7 @@ namespace PlaylistArchivizer.UI.Core
                 ["fields"] = "id, images, name, snapshot_id"
             };
 
-            var response = await HttpHelper.PostAsync(_client, "https://api.spotify.com/v1/me/playlists", parameters, body, "application/json");
+            var response = await HttpHelper.PostAsync(_client, "me/playlists", parameters, body, "application/json");
             var jsonResponse = JsonSerializer.Deserialize<PlaylistResponse>(await response.Content.ReadAsStreamAsync())!;
 
             Playlist playlist = PlaylistMapper.Map(jsonResponse);
@@ -213,7 +213,7 @@ namespace PlaylistArchivizer.UI.Core
             // Queue sorted by added date
             Queue<Track> trackStack = new(tracks.OrderBy(x => x.AddedAt));
 
-            string url = $"https://api.spotify.com/v1/playlists/{playlist.Id}/tracks";
+            string url = $"playlists/{playlist.Id}/tracks";
 
             while (trackStack.Count > 0)
             {
@@ -247,7 +247,7 @@ namespace PlaylistArchivizer.UI.Core
             await PaginationHelper.ForEachRequestAsync(50, async (parameters) =>
             {
                 parameters["fields"] = "total, items.track.id";
-                var response = await HttpHelper.GetAsync(_client, "https://api.spotify.com/v1/me/tracks", parameters);
+                var response = await HttpHelper.GetAsync(_client, "me/tracks", parameters);
 
                 var jsonResponse = JsonSerializer.Deserialize<GetSavedTrackIdsResponse>(await response.Content.ReadAsStreamAsync())!;
 
@@ -280,7 +280,7 @@ namespace PlaylistArchivizer.UI.Core
                 parameters["ids"] = string.Join(",", tracksIds);
                 parameters["fields"] = "tracks(album.images, artists.name, id, name, type, is_local)";
 
-                var response = await HttpHelper.GetAsync(_client, "https://api.spotify.com/v1/tracks", parameters);
+                var response = await HttpHelper.GetAsync(_client, "me/tracks", parameters);
 
                 var jsonResponse = JsonSerializer.Deserialize<GetTracksResponse>(await response.Content.ReadAsStreamAsync())!;
 

@@ -1,15 +1,13 @@
-﻿using Microsoft.AspNetCore.Http;
-using PlaylistArchivizer.Application.Interfaces;
+﻿using PlaylistArchivizer.Application.Interfaces;
 using System.Net.Http.Headers;
-using System.Security.Claims;
 
 namespace PlaylistArchivizer.Infrastructure.SpotifyApi
 {
-    public class SpotifyAuthorizationHandler(IAuthService authService, IHttpContextAccessor httpContextAccessor) : DelegatingHandler
+    public class SpotifyAuthorizationHandler(IAuthService authService, ICurrentUserContext currentUserContext) : DelegatingHandler
     {
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var userId = httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = currentUserContext.UserId;
 
             if (string.IsNullOrEmpty(userId))
                 throw new UnauthorizedAccessException("User context is missing.");

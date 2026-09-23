@@ -1,54 +1,44 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PlaylistArchivizer.Application.Interfaces;
 using PlaylistArchivizer.Domain.Entities;
 using PlaylistArchivizer.Domain.Models;
 using PlaylistArchivizer.Infrastructure.Persistence.Data;
 using PlaylistArchivizer.Infrastructure.Persistence.Mappers;
-using System.Security.Claims;
 
 namespace PlaylistArchivizer.Infrastructure.Persistence.Repositories
 {
-    public class PlaylistRepository : IPlaylistRepository
+    public class PlaylistRepository(ApplicationDbContext dbContext) : IPlaylistRepository
     {
-        private readonly ApplicationDbContext _dbContext;
-        private readonly string _userId;
+        private readonly ApplicationDbContext _dbContext = dbContext;
 
-        public PlaylistRepository(ApplicationDbContext dbContext, IHttpContextAccessor httpContextAccessor)
+        public async Task<List<Playlist>> GetArchivedPlaylistsAsync(string userId, CancellationToken token = default)
         {
-            _dbContext = dbContext;
-
-            // Extract the authenticated user's ID from the JWT claims context
-            _userId = httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
-
-            if (string.IsNullOrEmpty(_userId))
-                throw new UnauthorizedAccessException("User context is missing.");
-        }
-
-        public async Task<List<Playlist>> GetArchivedPlaylistsAsync(CancellationToken token)
-        {
-            // Retrieve only the playlists belonging to the currently authenticated user
+            // Retrieve only the playlists belonging to the user
             var entities = await _dbContext.Playlists
                 .Include(p => p.Tracks)
-                .Where(p => p.UserId == _userId)
+                .Where(p => p.UserId == userId)
                 .ToListAsync(token);
 
             return entities.Select(PlaylistMapper.Map).ToList();
         }
 
-        public async Task AddPlaylistAsync(Playlist playlist, CancellationToken token)
+        public async Task AddPlaylistAsync(Playlist playlist, string userId, CancellationToken token = default)
         {
-            var entity = PlaylistMapper.Map(playlist, _userId);
+            var entity = PlaylistMapper.Map(playlist, userId);
 
             _dbContext.Playlists.Add(entity);
             await _dbContext.SaveChangesAsync(token);
         }
 
-        public async Task UpdatePlaylistTracksAsync(string playlistId, string snapshotId, IEnumerable<Track> newTracks, CancellationToken token)
+        public async Task UpdatePlaylistTracksAsync(string playlistId,
+                                                    string snapshotId,
+                                                    IEnumerable<Track> newTracks,
+                                                    string userId,
+                                                    CancellationToken token = default)
         {
             var playlistEntity = await _dbContext.Playlists
                 .Include(p => p.Tracks)
-                .FirstOrDefaultAsync(p => p.Id == playlistId && p.UserId == _userId, token);
+                .FirstOrDefaultAsync(p => p.Id == playlistId && p.UserId == userId, token);
 
             if (playlistEntity == null)
                 return;
@@ -78,10 +68,10 @@ namespace PlaylistArchivizer.Infrastructure.Persistence.Repositories
             await _dbContext.SaveChangesAsync(token);
         }
 
-        public async Task RemovePlaylistAsync(string playlistId, CancellationToken token)
+        public async Task RemovePlaylistAsync(string playlistId, string userId, CancellationToken token = default)
         {
             var playlist = await _dbContext.Playlists
-                .FirstOrDefaultAsync(p => p.Id == playlistId && p.UserId == _userId, token);
+                .FirstOrDefaultAsync(p => p.Id == playlistId && p.UserId == userId, token);
 
             if (playlist != null)
             {
@@ -90,13 +80,13 @@ namespace PlaylistArchivizer.Infrastructure.Persistence.Repositories
             }
         }
 
-        public async Task RemoveTrackAsync(string playlistId, string trackId, CancellationToken token)
+        public async Task RemoveTrackAsync(string playlistId, string trackId, string userId, CancellationToken token = default)
         {
-            // Ensure the track belongs to the playlist, and that playlist belongs to the current user
+            // Ensure the track belongs to the playlist, and that playlist belongs to the user
             var track = await _dbContext.Tracks
                 .FirstOrDefaultAsync(t => t.Id == trackId &&
-                                          t.PlaylistId == playlistId &&
-                                          _dbContext.Playlists.Any(p => p.Id == playlistId && p.UserId == _userId), token);
+                                     t.PlaylistId == playlistId &&
+                                     _dbContext.Playlists.Any(p => p.Id == playlistId && p.UserId == userId), token);
 
             if (track != null)
             {

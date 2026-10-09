@@ -9,5 +9,6 @@ namespace PlaylistArchivizer.Application.Interfaces
         Task RemovePlaylistAsync(string playlistId, CancellationToken token = default);
         Task CreateArchivedPlaylistInSpotify(string playlistId, CancellationToken token = default);
         Task<IReadOnlyCollection<Track>> GetFreeTracksAsync(CancellationToken token = default);
+        Task<IReadOnlyCollection<string>> GetSavedTrackIdsFromPlaylistsAsync(CancellationToken token = default);
     }
 }

@@ -44,5 +44,13 @@ namespace PlaylistArchivizer.WebApi.Controllers
             var freeTracks = await spotifyService.GetFreeTracksAsync(token);
             return Ok(new { freeTracks });
         }
+
+        [HttpGet("tracks/saved-from-archived")]
+        public async Task<ActionResult<IReadOnlyCollection<string>>> GetSavedTrackIdsFromPlaylists(CancellationToken token)
+        {
+            var savedTrackIds = await spotifyService.GetSavedTrackIdsFromPlaylistsAsync(token);
+
+            return Ok(new { savedTrackIds });
+        }
     }
 }

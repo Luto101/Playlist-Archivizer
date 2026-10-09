@@ -89,8 +89,6 @@ namespace PlaylistArchivizer.Application.Services
 
         public async Task<IReadOnlyCollection<Track>> GetFreeTracksAsync(CancellationToken token = default)
         {
-            _ = UserId; // Triggers validation check
-
             var playlists = await playlistRepository.GetArchivedPlaylistsAsync(UserId, token);
 
             var allTrackIdsFromPlaylists = playlists
@@ -98,13 +96,27 @@ namespace PlaylistArchivizer.Application.Services
                 .Select(t => t.Id)
                 .ToHashSet();
 
-            var allSavedTracksIds = await savedTrackService.GetUserSavedTracksIdsAsync(token);
+            var allSavedTracksIds = await savedTrackService.GetUserSavedTrackIdsAsync(token);
 
             var difference = allSavedTracksIds.Except(allTrackIdsFromPlaylists).ToList();
 
             var tracks = await trackService.GetTrackInfoFromIdsAsync(difference, token);
 
             return tracks;
+        }
+
+        public async Task<IReadOnlyCollection<string>> GetSavedTrackIdsFromPlaylistsAsync(CancellationToken token = default)
+        {
+            var playlists = await playlistRepository.GetArchivedPlaylistsAsync(UserId, token);
+
+            var allTrackIdsFromPlaylists = playlists
+                .SelectMany(p => p.Tracks)
+                .Select(t => t.Id)
+                .ToHashSet();
+
+            var allSavedTracksIds = await savedTrackService.GetSavedTrackIdsAsync(allTrackIdsFromPlaylists, token);
+
+            return allSavedTracksIds;
         }
     }
 }

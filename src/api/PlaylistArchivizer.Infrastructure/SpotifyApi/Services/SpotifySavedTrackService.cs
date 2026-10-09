@@ -10,7 +10,7 @@ namespace PlaylistArchivizer.Infrastructure.SpotifyApi.Services
     {
         private readonly HttpClient _client = httpClientFactory.CreateClient("SpotifyClient");
 
-        public async Task<IReadOnlyCollection<string>> GetUserSavedTracksIdsAsync(CancellationToken token = default)
+        public async Task<IReadOnlyCollection<string>> GetUserSavedTrackIdsAsync(CancellationToken token = default)
         {
             List<string> savedTracksIds = [];
 
@@ -33,5 +33,38 @@ namespace PlaylistArchivizer.Infrastructure.SpotifyApi.Services
 
             return savedTracksIds;
         }
+
+        public async Task<IReadOnlyCollection<string>> GetSavedTrackIdsAsync(IEnumerable<string> trackIds,
+                                                                             CancellationToken token = default)
+        {
+            List<string> savedTracksIds = [];
+
+            foreach (var batch in trackIds.Chunk(40))
+            {
+                token.ThrowIfCancellationRequested();
+
+                string idsParameter = string.Join(",", batch.Select(id => $"spotify:track:{id}"));
+
+                Dictionary<string, string?> parameters = new()
+                {
+                    ["uris"] = idsParameter
+                };
+
+                var responseRaw = await HttpHelper.GetAsync(_client, "me/library/contains", parameters);
+
+                var response = await responseRaw.Content.ReadFromJsonAsync<bool[]>(token)
+                    ?? throw new JsonException("Failed to deserialize Spotify response.");
+
+                // Check which tracks in the batch are saved and add their IDs to the result list
+                for (int i = 0; i < response.Length; i++)
+                {
+                    if (response[i])
+                        savedTracksIds.Add(batch[i]);
+                }
+            }
+
+            return savedTracksIds;
+        }
+
     }
 }

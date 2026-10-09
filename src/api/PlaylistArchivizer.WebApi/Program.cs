@@ -40,7 +40,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddHttpClient("SpotifyClient", c => c.BaseAddress = new Uri("https://api.spotify.com/v1"))
+builder.Services.AddHttpClient("SpotifyClient", c => c.BaseAddress = new Uri("https://api.spotify.com/v1/"))
     .AddHttpMessageHandler<SpotifyAuthorizationHandler>();
 
 builder.Services.AddHttpClient(); // For services that don't require Spotify user token

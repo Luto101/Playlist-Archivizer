@@ -22,7 +22,6 @@ namespace PlaylistArchivizer.Infrastructure.Persistence.Mappers
                 Tracks = playlist.Tracks.Select(t => new TrackEntity
                 {
                     Id = t.Id,
-                    PlaylistId = playlist.Id,
                     Name = t.Name,
                     AddedAt = t.AddedAt,
                     ImageUrl = t.ImageUrl,

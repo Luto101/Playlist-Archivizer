@@ -1,4 +1,4 @@
-﻿namespace PlaylistArchivizer.Application.Dtos
+﻿namespace PlaylistArchivizer.WebApi.Dtos
 {
     public record ExchangeCodeRequest(string Code);
 }

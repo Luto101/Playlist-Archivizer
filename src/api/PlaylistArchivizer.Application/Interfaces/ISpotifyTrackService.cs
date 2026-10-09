@@ -4,7 +4,7 @@ namespace PlaylistArchivizer.Application.Interfaces
 {
     public interface ISpotifyTrackService
     {
-        Task<IEnumerable<Track>> GetPlaylistTracksAsync(string playlistId, CancellationToken token = default);
-        Task<IEnumerable<Track>> GetTrackInfoFromIdsAsync(Queue<string> ids, CancellationToken token = default);
+        Task<IReadOnlyCollection<Track>> GetPlaylistTracksAsync(string playlistId, CancellationToken token = default);
+        Task<IReadOnlyCollection<Track>> GetTrackInfoFromIdsAsync(IEnumerable<string> ids, CancellationToken token = default);
     }
 }

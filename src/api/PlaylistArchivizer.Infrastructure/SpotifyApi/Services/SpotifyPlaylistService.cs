@@ -12,7 +12,7 @@ namespace PlaylistArchivizer.Infrastructure.SpotifyApi.Services
     {
         private readonly HttpClient _client = httpClientFactory.CreateClient("SpotifyClient");
 
-        public async Task<IEnumerable<Playlist>> GetPlaylistsAsync(CancellationToken token = default)
+        public async Task<IReadOnlyCollection<Playlist>> GetPlaylistsAsync(CancellationToken token = default)
         {
             List<Playlist> playlists = [];
 
@@ -49,7 +49,7 @@ namespace PlaylistArchivizer.Infrastructure.SpotifyApi.Services
                 ["fields"] = "id, images, name, snapshot_id"
             };
 
-            var playlistResponseRaw = await HttpHelper.PostAsync(_client, "me/playlists", parameters, body, "application/json");
+            var playlistResponseRaw = await HttpHelper.PostAsync(_client, "me/playlists", parameters, null, body, "application/json");
 
             var playlistResponse = await playlistResponseRaw.Content.ReadFromJsonAsync<PlaylistResponse>(token)
                 ?? throw new JsonException("Failed to deserialize Spotify playlist response.");
@@ -81,12 +81,12 @@ namespace PlaylistArchivizer.Infrastructure.SpotifyApi.Services
 
                 string urisQueryString = string.Join(",", tracksUris);
 
-                Dictionary<string, string> parameters = new()
+                Dictionary<string, string?> parameters = new()
                 {
                     ["uris"] = urisQueryString
                 };
 
-                await HttpHelper.PostAsync(_client, url, null, parameters, "application/json");
+                await HttpHelper.PostAsync(_client, url, parameters, null, null, "application/json");
             }
         }
     }

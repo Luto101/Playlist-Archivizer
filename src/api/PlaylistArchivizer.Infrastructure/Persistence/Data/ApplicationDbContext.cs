@@ -26,6 +26,7 @@ namespace PlaylistArchivizer.Infrastructure.Persistence.Data
             base.OnModelCreating(modelBuilder);
 
             EncryptionConverter encryptionConverter = new(_encryptionService);
+            StringListConverter stringListConverter = new();
 
             modelBuilder.Entity<SpotifyCredential>(entity =>
             {
@@ -35,6 +36,16 @@ namespace PlaylistArchivizer.Infrastructure.Persistence.Data
 
                 entity.Property(e => e.RefreshToken).HasConversion(encryptionConverter);
             });
+
+            modelBuilder.Entity<TrackEntity>(entity =>
+            {
+                entity.Property(t => t.Artists).HasConversion(stringListConverter);
+            });
+
+            // Configure the many-to-many relationship between PlaylistEntity and TrackEntity
+            modelBuilder.Entity<PlaylistEntity>()
+                .HasMany(p => p.Tracks)
+                .WithMany();
         }
     }
 }

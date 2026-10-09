@@ -12,7 +12,7 @@ namespace PlaylistArchivizer.Infrastructure.SpotifyApi.Services
     {
         private readonly HttpClient _client = httpClientFactory.CreateClient("SpotifyClient");
 
-        public async Task<IEnumerable<Track>> GetPlaylistTracksAsync(string playlistId, CancellationToken token = default)
+        public async Task<IReadOnlyCollection<Track>> GetPlaylistTracksAsync(string playlistId, CancellationToken token = default)
         {
             List<Track> tracks = [];
             string url = $"playlists/{playlistId}/tracks";
@@ -44,17 +44,19 @@ namespace PlaylistArchivizer.Infrastructure.SpotifyApi.Services
             return tracks;
         }
 
-        public async Task<IEnumerable<Track>> GetTrackInfoFromIdsAsync(Queue<string> ids, CancellationToken token = default)
+        public async Task<IReadOnlyCollection<Track>> GetTrackInfoFromIdsAsync(IEnumerable<string> ids, CancellationToken token = default)
         {
             List<Track> resultTracks = [];
 
-            while (ids.Count > 0)
+            var trackIds = new Queue<string>(ids);
+
+            while (trackIds.Count > 0)
             {
                 Queue<string> tracksIds = [];
 
                 // Spotify's Get Several Tracks endpoint accepts a maximum of 50 IDs per batch
-                for (int i = 0; i < 50 && ids.Count > 0; i++)
-                    tracksIds.Enqueue(ids.Dequeue());
+                for (int i = 0; i < 50 && trackIds.Count > 0; i++)
+                    tracksIds.Enqueue(trackIds.Dequeue());
 
                 Dictionary<string, string?> parameters = new()
                 {

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using PlaylistArchivizer.Application.Dtos;
 using PlaylistArchivizer.Application.Exceptions;
 using PlaylistArchivizer.Application.Interfaces;
+using PlaylistArchivizer.WebApi.Dtos;
 using System.Security.Cryptography;
 
 namespace PlaylistArchivizer.WebApi.Controllers

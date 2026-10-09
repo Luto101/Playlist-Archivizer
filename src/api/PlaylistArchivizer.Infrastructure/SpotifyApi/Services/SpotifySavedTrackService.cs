@@ -10,7 +10,7 @@ namespace PlaylistArchivizer.Infrastructure.SpotifyApi.Services
     {
         private readonly HttpClient _client = httpClientFactory.CreateClient("SpotifyClient");
 
-        public async Task<IEnumerable<string>> GetUserSavedTracksIdsAsync(CancellationToken token = default)
+        public async Task<IReadOnlyCollection<string>> GetUserSavedTracksIdsAsync(CancellationToken token = default)
         {
             List<string> savedTracksIds = [];
 

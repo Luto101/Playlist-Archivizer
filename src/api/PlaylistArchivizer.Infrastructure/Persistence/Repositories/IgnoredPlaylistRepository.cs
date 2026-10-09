@@ -13,9 +13,9 @@ namespace PlaylistArchivizer.Infrastructure.Persistence.Repositories
             var ids = await dbContext.IgnoredPlaylists
                 .Where(p => p.UserId == userId)
                 .Select(p => p.PlaylistId)
-                .ToListAsync(token);
+                .ToHashSetAsync(token);
 
-            return ids.ToHashSet();
+            return ids;
         }
 
         public async Task AddToIgnoredAsync(string playlistId, string userId, CancellationToken token = default)

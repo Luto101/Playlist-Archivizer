@@ -1,5 +1,4 @@
-﻿// Location: PlaylistArchivizer.Application.Services/SpotifyService.cs
-using PlaylistArchivizer.Application.Interfaces;
+﻿using PlaylistArchivizer.Application.Interfaces;
 using PlaylistArchivizer.Domain.Models;
 
 namespace PlaylistArchivizer.Application.Services
@@ -14,7 +13,7 @@ namespace PlaylistArchivizer.Application.Services
         private string UserId => currentUserContext.UserId
             ?? throw new UnauthorizedAccessException("User context is missing or user is not authenticated.");
 
-        public async Task<IEnumerable<Playlist>> GetPlaylistsAsync(CancellationToken token = default)
+        public async Task<IReadOnlyCollection<Playlist>> GetPlaylistsAsync(CancellationToken token = default)
         {
             var currentUserId = UserId; // Safely retrieved and validated at runtime
             var playlists = await playlistService.GetPlaylistsAsync(token);
@@ -64,9 +63,9 @@ namespace PlaylistArchivizer.Application.Services
             return archivedPlaylists;
         }
 
-        public async Task RemoveTrackAsync(Playlist playlist, string trackId, CancellationToken token = default)
+        public async Task RemoveTrackAsync(string playlistId, string trackId, CancellationToken token = default)
         {
-            await playlistRepository.RemoveTrackAsync(playlist.Id, trackId, UserId, token);
+            await playlistRepository.RemoveTrackAsync(playlistId, trackId, UserId, token);
         }
 
         public async Task RemovePlaylistAsync(string playlistId, CancellationToken token = default)
@@ -74,25 +73,38 @@ namespace PlaylistArchivizer.Application.Services
             await playlistRepository.RemovePlaylistAsync(playlistId, UserId, token);
         }
 
-        public async Task CreatePlaylistWithTracksAsync(string name, IEnumerable<Track> tracks, CancellationToken token = default)
+        public async Task CreateArchivedPlaylistInSpotify(string playlistId, CancellationToken token = default)
         {
-            var playlist = await playlistService.CreatePlaylistAsync(name, token);
+            string name = "PlaylistArchivizer: " + await playlistRepository.GetPlaylistName(playlistId, UserId, token);
+
+            var newPlaylist = await playlistService.CreatePlaylistAsync(name, token);
 
             // Ignore the new playlist to prevent the archiver from syncing it back onto itself
-            await ignoredPlaylistRepository.AddToIgnoredAsync(playlist.Id, UserId, token);
-            await playlistService.AddTracksToPlaylistAsync(playlist, tracks, token);
+            await ignoredPlaylistRepository.AddToIgnoredAsync(newPlaylist.Id, UserId, token);
+
+            var tracks = await playlistRepository.GetTracksFromPlaylist(playlistId, UserId, token);
+
+            await playlistService.AddTracksToPlaylistAsync(newPlaylist, tracks, token);
         }
 
-        public Task<IEnumerable<string>> GetUserSavedTracksIdsAsync(CancellationToken token = default)
+        public async Task<IReadOnlyCollection<Track>> GetFreeTracksAsync(CancellationToken token = default)
         {
             _ = UserId; // Triggers validation check
-            return savedTrackService.GetUserSavedTracksIdsAsync(token);
-        }
 
-        public Task<IEnumerable<Track>> GetTrackInfoFromIdsAsync(Queue<string> ids, CancellationToken token = default)
-        {
-            _ = UserId; // Triggers validation check
-            return trackService.GetTrackInfoFromIdsAsync(ids, token);
+            var playlists = await playlistRepository.GetArchivedPlaylistsAsync(UserId, token);
+
+            var allTrackIdsFromPlaylists = playlists
+                .SelectMany(p => p.Tracks)
+                .Select(t => t.Id)
+                .ToHashSet();
+
+            var allSavedTracksIds = await savedTrackService.GetUserSavedTracksIdsAsync(token);
+
+            var difference = allSavedTracksIds.Except(allTrackIdsFromPlaylists).ToList();
+
+            var tracks = await trackService.GetTrackInfoFromIdsAsync(difference, token);
+
+            return tracks;
         }
     }
 }

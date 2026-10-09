@@ -4,6 +4,6 @@ namespace PlaylistArchivizer.Application.Interfaces
 {
     public interface ISpotifySavedTrackService
     {
-        Task<IEnumerable<string>> GetUserSavedTracksIdsAsync(CancellationToken token = default);
+        Task<IReadOnlyCollection<string>> GetUserSavedTracksIdsAsync(CancellationToken token = default);
     }
 }

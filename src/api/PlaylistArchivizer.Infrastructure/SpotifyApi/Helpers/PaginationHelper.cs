@@ -14,7 +14,7 @@
                                                      Func<Dictionary<string, string?>, Task<int>> fetchRequest, 
                                                      CancellationToken token = default)
         {
-            int offset = 0, total;
+             int offset = 0, total;
 
             // Query parameters
             Dictionary<string, string?> parameters = new()

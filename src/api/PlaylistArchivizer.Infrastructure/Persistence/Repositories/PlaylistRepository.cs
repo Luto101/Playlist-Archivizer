@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PlaylistArchivizer.Application.Exceptions;
 using PlaylistArchivizer.Application.Interfaces;
 using PlaylistArchivizer.Domain.Entities;
 using PlaylistArchivizer.Domain.Models;
@@ -26,9 +27,37 @@ namespace PlaylistArchivizer.Infrastructure.Persistence.Repositories
         {
             var entity = PlaylistMapper.Map(playlist, userId);
 
+            // Remove duplicate tracks from the playlist before adding it to the database
+            var uniqueTracksInPlaylist = entity.Tracks
+                .GroupBy(t => t.Id)
+                .Select(g => g.First())
+                .ToList();
+
+            entity.Tracks = uniqueTracksInPlaylist;
+
+            var trackIdsToFetch = entity.Tracks.Select(t => t.Id).ToHashSet();
+
+            var globallyExistingTracks = await _dbContext.Tracks
+                .Where(t => trackIdsToFetch.Contains(t.Id))
+                .ToDictionaryAsync(t => t.Id, token);
+
+            var finalTracks = new List<TrackEntity>();
+
+            foreach (var track in entity.Tracks)
+            {
+                // Check if the track already exists globally
+                if (globallyExistingTracks.TryGetValue(track.Id, out var existingGlobalTrack))
+                    finalTracks.Add(existingGlobalTrack);
+                else
+                    finalTracks.Add(track);
+            }
+
+            entity.Tracks = finalTracks;
+
             _dbContext.Playlists.Add(entity);
             await _dbContext.SaveChangesAsync(token);
         }
+
 
         public async Task UpdatePlaylistTracksAsync(string playlistId,
                                                     string snapshotId,
@@ -38,30 +67,47 @@ namespace PlaylistArchivizer.Infrastructure.Persistence.Repositories
         {
             var playlistEntity = await _dbContext.Playlists
                 .Include(p => p.Tracks)
-                .FirstOrDefaultAsync(p => p.Id == playlistId && p.UserId == userId, token);
+                .FirstOrDefaultAsync(p => p.Id == playlistId && p.UserId == userId, token)
+                ?? throw new NotFoundException("Playlist or UserId", playlistId + " or " + userId);
 
-            if (playlistEntity == null)
-                return;
-
-            // Update the snapshot ID to reflect the latest state from Spotify
             playlistEntity.SnapshotId = snapshotId;
 
-            // Append only newly discovered tracks to prevent duplicates within the archived playlist
-            var existingTrackIds = playlistEntity.Tracks.Select(t => t.Id).ToHashSet();
+            var existingPlaylistTrackIds = playlistEntity.Tracks.Select(t => t.Id).ToHashSet();
 
-            foreach (var track in newTracks)
+            var tracksToProcess = newTracks.Where(t => !existingPlaylistTrackIds.Contains(t.Id)).ToList();
+
+            // No new tracks to process
+            if (tracksToProcess.Count == 0)
             {
-                if (!existingTrackIds.Contains(track.Id))
+                await _dbContext.SaveChangesAsync(token);
+                return;
+            }
+
+            var trackIdsToFetch = tracksToProcess.Select(t => t.Id).ToHashSet();
+
+            var globallyExistingTracks = await _dbContext.Tracks
+                .Where(t => trackIdsToFetch.Contains(t.Id))
+                .ToDictionaryAsync(t => t.Id, token);
+
+            foreach (var track in tracksToProcess)
+            {
+                // Check if the track already exists globally
+                if (globallyExistingTracks.TryGetValue(track.Id, out var existingGlobalTrack))
+                    playlistEntity.Tracks.Add(existingGlobalTrack);
+                else
                 {
-                    playlistEntity.Tracks.Add(new TrackEntity
+                    var newTrackEntity = new TrackEntity
                     {
                         Id = track.Id,
-                        PlaylistId = playlistId,
                         Name = track.Name,
                         AddedAt = track.AddedAt,
                         ImageUrl = track.ImageUrl,
                         Artists = track.Artists.ToList()
-                    });
+                    };
+
+                    playlistEntity.Tracks.Add(newTrackEntity);
+
+                    globallyExistingTracks.Add(track.Id, newTrackEntity);
                 }
             }
 
@@ -71,28 +117,47 @@ namespace PlaylistArchivizer.Infrastructure.Persistence.Repositories
         public async Task RemovePlaylistAsync(string playlistId, string userId, CancellationToken token = default)
         {
             var playlist = await _dbContext.Playlists
-                .FirstOrDefaultAsync(p => p.Id == playlistId && p.UserId == userId, token);
+                .FirstOrDefaultAsync(p => p.Id == playlistId && p.UserId == userId, token)
+                ?? throw new NotFoundException("Playlist or UserId", playlistId + " or " + userId);
 
-            if (playlist != null)
-            {
-                _dbContext.Playlists.Remove(playlist);
-                await _dbContext.SaveChangesAsync(token);
-            }
+            _dbContext.Playlists.Remove(playlist);
+            await _dbContext.SaveChangesAsync(token);
         }
 
         public async Task RemoveTrackAsync(string playlistId, string trackId, string userId, CancellationToken token = default)
         {
-            // Ensure the track belongs to the playlist, and that playlist belongs to the user
-            var track = await _dbContext.Tracks
-                .FirstOrDefaultAsync(t => t.Id == trackId &&
-                                     t.PlaylistId == playlistId &&
-                                     _dbContext.Playlists.Any(p => p.Id == playlistId && p.UserId == userId), token);
+            // Retrieve the playlist along with its tracks
+            var playlist = await _dbContext.Playlists
+                .Include(p => p.Tracks)
+                .FirstOrDefaultAsync(p => p.Id == playlistId && p.UserId == userId, token)
+                ?? throw new NotFoundException("Playlist or UserId", playlistId + " or " + userId);
 
-            if (track != null)
-            {
-                _dbContext.Tracks.Remove(track);
-                await _dbContext.SaveChangesAsync(token);
-            }
+            // Find the track to remove
+            var track = playlist.Tracks.FirstOrDefault(t => t.Id == trackId)
+                ?? throw new NotFoundException("Track", trackId);
+
+            playlist.Tracks.Remove(track);
+
+            await _dbContext.SaveChangesAsync(token);
+        }
+
+        public async Task<IReadOnlyCollection<Track>> GetTracksFromPlaylist(string playlistId, string userId, CancellationToken token = default)
+        {
+            var playlist = await _dbContext.Playlists
+                .Include(p => p.Tracks)
+                .FirstOrDefaultAsync(p => p.Id == playlistId && p.UserId == userId, token)
+                ?? throw new NotFoundException("Playlist or UserId", playlistId + " or " + userId);
+
+            return playlist.Tracks.Select(TrackMapper.Map).ToList();
+        }
+
+        public async Task<string> GetPlaylistName(string playlistId, string userId, CancellationToken token = default)
+        {
+            var playlist = await _dbContext.Playlists
+                .FirstOrDefaultAsync(p => p.Id == playlistId && p.UserId == userId, token)
+                ?? throw new NotFoundException("Playlist or UserId", playlistId + " or " + userId);
+
+            return playlist.Name;
         }
     }
 }
